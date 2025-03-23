@@ -18,6 +18,7 @@ class LIRReader(ReaderBase):
             num -= 100000000
         return num / 1000  # Делим на 10^6 для получения дробной части
 
+    # Декодирование потока байтов в данные о позиции
     def read_x_coord(self):
         if self.read_LIR_hex(1) == "0a":
             xCoord = ""

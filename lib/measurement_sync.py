@@ -34,12 +34,14 @@ class MeasurementSync:
 
         self.on_line_recorded = None
 
+    # Цикл чтения значений с ЛИР
     def read_lir(self):
         while not self.stop_signal:
             self.lir_reader.update()
             with self.lir_lock:
                 self.lir_data = self.lir_reader.x_coord
 
+    # Цикл чтения значений с датчика
     def read_sensor(self):
         while not self.stop_signal:
             self.sensor_reader.update()
@@ -49,6 +51,7 @@ class MeasurementSync:
                     self.sensor_reader.get_analog(),
                 )
 
+    # Шаг Синхронного считывания значений из потоков в едином потоке, запись данных в файл
     def iterate(self):
         with self.lir_lock:
             lir_snapshot = self.lir_data
@@ -57,16 +60,21 @@ class MeasurementSync:
 
         if (not lir_snapshot is None) and sensor_snapshot:
             measure_time = time.time() - self.start_time
+
+            # Формируем строку с данными
             record_text = f"{measure_time} : {lir_snapshot} : {sensor_snapshot[0]} : {sensor_snapshot[1]}\n"
 
+            # Запись строки с данными в файл
             with self.record_file.open("a") as record_file_buff:
                 record_file_buff.write(record_text)
 
+            # callback для внешней логики
             if not self.on_line_recorded is None:
                 self.on_line_recorded(record_text)
 
             return record_text
 
+    # Цикл самой синхронизации
     def loop(self):
         while not self.stop_signal:
             self.iterate()
