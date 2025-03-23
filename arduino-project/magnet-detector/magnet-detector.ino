@@ -1,5 +1,3 @@
-#include <SoftwareSerial.h>
-
 // Hall sensor pins
 const int digitalPin = 12; // linear Hall magnetic sensor digital interface
 const int analogPin = A0;  // linear Hall magnetic sensor analog interface
@@ -24,7 +22,7 @@ void sendData(int sensorDigital, int sensorAnalog)
 
 void loop()
 {
-  int digital = digitalRead();
-  int analog = analogRead();
+  int digital = digitalRead(digitalPin);
+  int analog = analogRead(analogPin);
   sendData(digital, analog);
 }

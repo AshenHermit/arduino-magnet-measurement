@@ -30,14 +30,18 @@ class MeasurementSync:
         self.thread_sensor = threading.Thread(target=self.read_sensor, daemon=True)
         self.thread_loop = threading.Thread(target=self.loop, daemon=True)
 
+        self.stop_signal = False
+
+        self.on_line_recorded = None
+
     def read_lir(self):
-        while True:
+        while not self.stop_signal:
             self.lir_reader.update()
             with self.lir_lock:
                 self.lir_data = self.lir_reader.x_coord
 
     def read_sensor(self):
-        while True:
+        while not self.stop_signal:
             self.sensor_reader.update()
             with self.sensor_lock:
                 self.sensor_data = (
@@ -45,25 +49,35 @@ class MeasurementSync:
                     self.sensor_reader.get_analog(),
                 )
 
+    def iterate(self):
+        with self.lir_lock:
+            lir_snapshot = self.lir_data
+        with self.sensor_lock:
+            sensor_snapshot = self.sensor_data
+
+        if (not lir_snapshot is None) and sensor_snapshot:
+            measure_time = time.time() - self.start_time
+            record_text = f"{measure_time} : {lir_snapshot} : {sensor_snapshot[0]} : {sensor_snapshot[1]}\n"
+
+            with self.record_file.open("a") as record_file_buff:
+                record_file_buff.write(record_text)
+
+            if not self.on_line_recorded is None:
+                self.on_line_recorded(record_text)
+
+            return record_text
+
     def loop(self):
-        while True:
-            with self.lir_lock:
-                lir_snapshot = self.lir_data
-            with self.sensor_lock:
-                sensor_snapshot = self.sensor_data
-
-            if lir_snapshot is not None and sensor_snapshot is not None:
-                measure_time = time.time() - self.start_time
-                record_text = f"{measure_time} : {lir_snapshot} : {sensor_snapshot[0]} : {sensor_snapshot[1]}\n"
-
-                with self.record_file.open("a") as record_file_buff:
-                    record_file_buff.write(record_text)
-
-                print(record_text)
-            time.sleep(0.01)
+        while not self.stop_signal:
+            self.iterate()
 
     def start(self):
         self.thread_lir.start()
         self.thread_sensor.start()
         self.thread_loop.start()
+
+    def stop(self):
+        self.stop_signal = True
+
+    def join(self):
         self.thread_loop.join()  # Ждем завершения основного потока
