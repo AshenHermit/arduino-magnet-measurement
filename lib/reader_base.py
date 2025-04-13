@@ -7,6 +7,3 @@ class ReaderBase:
 
     def update(self):
         pass
-
-    def has_value(self):
-        return False

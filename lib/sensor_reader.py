@@ -30,6 +30,3 @@ class SensorReader(ReaderBase):
         if not self.sensor_info:
             return None
         return self.sensor_info["sensorAnalog"]
-
-    def has_value(self):
-        return not self.sensor_info is None

@@ -26,23 +26,25 @@ class MeasurementSync:
         self.lir_data = None
         self.sensor_data = None
 
-        self.thread_lir = threading.Thread(target=self.read_lir, daemon=True)
-        self.thread_sensor = threading.Thread(target=self.read_sensor, daemon=True)
-        self.thread_loop = threading.Thread(target=self.loop, daemon=True)
+        self.thread_lir = threading.Thread(target=self.read_lir_thread, daemon=True)
+        self.thread_sensor = threading.Thread(
+            target=self.read_sensor_thread, daemon=True
+        )
+        self.thread_loop = threading.Thread(target=self.loop_thread, daemon=True)
 
         self.stop_signal = False
 
         self.on_line_recorded = None
 
     # Цикл чтения значений с ЛИР
-    def read_lir(self):
+    def read_lir_thread(self):
         while not self.stop_signal:
             self.lir_reader.update()
             with self.lir_lock:
                 self.lir_data = self.lir_reader.x_coord
 
     # Цикл чтения значений с датчика
-    def read_sensor(self):
+    def read_sensor_thread(self):
         while not self.stop_signal:
             self.sensor_reader.update()
             with self.sensor_lock:
@@ -75,7 +77,7 @@ class MeasurementSync:
             return record_text
 
     # Цикл самой синхронизации
-    def loop(self):
+    def loop_thread(self):
         while not self.stop_signal:
             self.iterate()
 

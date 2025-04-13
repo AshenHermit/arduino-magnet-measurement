@@ -10,3 +10,4 @@ class LIRMock(LIRReader):
     def update(self):
         time.sleep(1)
         self.x_coord = random.randint(10, 19)
+        self.y_coord = random.randint(10, 19)
